@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# Disclaimer: This script is for educational purposes only. Do not use it against any network that you dont have authorization to test.
+
 from utils import Utils
 from subprocess import call, check_output
 import re
@@ -97,8 +100,8 @@ def main():
     utils.print_banner('mac-spoofer')
     mac_address = args.mac_address
     if mac_address is None:
-        utils.perror(f'Got invalid MAC address format')
-        self.__utils.perror('Exiting...')
+        utils.perror('Got invalid MAC address format')
+        utils.perror('Exiting...')
         exit()
 
     interface = args.interface

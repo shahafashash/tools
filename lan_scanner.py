@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# Disclaimer: This script is for educational purposes only. Do not use it against any network that you dont have authorization to test.
+
 from utils import Utils
 from argparse import ArgumentParser
 from datetime import datetime
@@ -56,7 +59,7 @@ def main():
     target = args.ip_network
     if target is None:
         utils.perror(f'Got invalid IP network or invalid IP networkformat')
-        self.__utils.perror('Exiting...')
+        utils.perror('Exiting...')
         exit()
     
     scanner.scan_network(target)

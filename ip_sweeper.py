@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# Disclaimer: This script is for educational purposes only. Do not use it against any network that you dont have authorization to test.
+
 from utils import Utils
 import nmap
 from argparse import ArgumentParser
