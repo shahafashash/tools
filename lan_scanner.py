@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Disclaimer: This script is for educational purposes only. Do not use it against any network that you dont have authorization to test.
+# Disclaimer: This script is provided for educational purposes only. Do not use this script for malicious or illegal purposes.
 
 from utils import Utils
 from argparse import ArgumentParser
@@ -7,62 +7,61 @@ from datetime import datetime
 from scapy.all import arping
 
 class LanScanner:
-    """Class that represents a lan scanner"""
+    """Class for performing a LAN scan"""
     def __init__(self) -> None:
-        self.__utils = Utils()
+        pass
 
     def scan_network(self, ip_network: str) -> None:
-        """Sending ARP messages to discover devices on the network.
+        """Send ARP requests to a range of IP addresses and display the result
 
         Args:
-            ip_network (str): Network to scan.
+            ip_network (str): The IP network to scan. 
         """
-        ip = self.__utils.check_ip_address_or_network(ip_network)
-        if ip is None:
-            self.__utils.perror(f'Got invalid IP network or invalid IP network format')
-            self.__utils.perror('Exiting...')
-            exit()
+        # Validate the IP address
+        is_valid_ip = Utils.is_valid_network_or_ip(ip_network)
+        if not is_valid_ip:
+            Utils.perror('Invalid IP address or network specified.')
+            Utils.perror('Exiting...')
+            return
 
-        scan_start = datetime.now()
-
-        self.__utils.poutput(f'canning target: {ip}')
-        self.__utils.poutput(f'Scan started at: {str(scan_start)}\n')
+        start_time = datetime.now()
+        Utils.poutput(f'Scanning target: {ip_network}')
+        Utils.poutput(f'Scan started at: {str(start_time)}\n')
 
         try:
-            result = arping(ip)
-       
+            # Scan the network for hosts using ARP
+            arping(ip_network)
+
         except KeyboardInterrupt:
-            self.__utils.perror('Got interrupted!')
-            self.__utils.perror('Exiting...')
-            exit()
-
+            Utils.perror('Got interrupted!')
+            Utils.perror('Exiting...')
+            return
         except Exception as ex:
-            self.__utils.perror(f'Error: {ex}')
-            self.__utils.perror('Exiting...')
-            exit()
+            Utils.perror(f'Error: {ex}')
+            Utils.perror('Exiting...')
+            return
 
-        scan_end = datetime.now()
-        self.__utils.poutput('', prefix=False)
-        self.__utils.poutput(f'Scan ended at: {str(scan_end)}')
-        self.__utils.poutput(f'Total scanning time: {str(scan_end-scan_start)}')
+        end_time = datetime.now()
+        Utils.poutput(f'Scan ended at: {str(end_time)}\n')
+        Utils.poutput(f'Scan duration: {str(end_time - start_time)}')
 
 
 def main():
-    utils = Utils()
-    scanner = LanScanner()
-    parser = ArgumentParser()
-    parser.add_argument('-i', '--ip-network', required=True, type=utils.check_ip_address_or_network, 
-                    help='Address representing the IP network (ex: 10.0.2.0/24)')
+    # Parse the command line arguments
+    parser = ArgumentParser(description='Scan a network for hosts using ARP')
+    parser.add_argument('-i', '--ip-network', required=True, help='IP address or network to scan', required=True)
     args = parser.parse_args()
-    
-    utils.print_banner('lan-scanner')
-    target = args.ip_network
-    if target is None:
-        utils.perror(f'Got invalid IP network or invalid IP networkformat')
-        utils.perror('Exiting...')
-        exit()
-    
-    scanner.scan_network(target)
 
-if __name__ == '__main__':
-    main()
+    # Print the banner
+    Utils.print_banner('ip-sweeper')
+    # Check if the ip_network argument is valid and print an error if it is not and exit
+    if not Utils.is_valid_network_or_ip(args.ip_network):
+        Utils.perror('Invalid IP address or network specified.')
+        Utils.perror('Exiting...')
+        exit(1)
+
+    # Create an instance of the class
+    lan_scanner = LanScanner()
+
+    # Scan the network for hosts using ARP
+    lan_scanner.scan_network(args.ip)

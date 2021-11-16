@@ -1,42 +1,85 @@
 import ipaddress
 from pyfiglet import figlet_format
-import sys
 from prettytable import PrettyTable
-from typing import Any, Union, List
+from typing import List, Dict, Any, Optional, Tuple
 import re
+import sys
+import os
+from colorama import Fore
 
 class Utils:
-    def __init__(self) -> None:
-        pass
+    """Class for utility functions"""
 
-    def perror(self, text: Any, end: str='\n') -> None:
-        """Prints text to stderr. Used to print errors.
+    @staticmethod
+    def perror(text: str, end: str = '\n') -> None:
+        """Prints an error message to stderr.
 
         Args:
-            text (Any): Text to print.
-            end: (str, optional): Text to print after the 'text' argument. Defaults to '\\n'.
+            text (str): The text to print.
+            end (str, optional): The end of the message. Defaults to '\n'.
         """
-        err_msg = f'[!] {text}'
-        sys.stderr.write(f'{err_msg}{end}')
+        sys.stderr.write(f'[!] {text}' + end)
         sys.stderr.flush()
 
-    def poutput(self, text: Any, prefix: bool=True, end: str='\n') -> None:
-        """Prints text to stderr. Used to print information.
+    @staticmethod
+    def poutput(text: str, prefix: bool=True, end: str = '\n') -> None:
+        """Prints a message to stdout.
 
         Args:
-            text (Any): Text to print.
-            prefix (bool, optional): Print the text with or without the prefix '[*]'. Defaults to True.
-            end: (str, optional): Text to print after the 'text' argument. Defaults to '\\n'.
+            text (str): The text to print.
+            prefix (bool, optional): Whether to prefix the message with '[*]'. Defaults to True.
+            end (str, optional): The end of the message. Defaults to '\n'.
         """
-        if prefix is True:
-            msg = f'[*] {text}'
+        if prefix:
+            sys.stdout.write(f'[*] {text}' + end)
         else:
-            msg = text
+            sys.stdout.write(text + end)
+        sys.stdout.flush()
 
-        sys.stderr.write(f'{msg}{end}')
-        sys.stderr.flush()
+    # Funcion to check if program is running with root privileges
+    @staticmethod
+    def is_root() -> bool:
+        """Checks if the program is running with root privileges.
 
-    def create_table(self, data: List[List[Any]], headers: List[str], alignments: dict[str, str]=None, borders: bool=True) -> PrettyTable:
+        Returns:
+            bool: True if running with root privileges, False otherwise.
+        """
+        return os.geteuid() == 0
+
+    @staticmethod
+    def color_text(text: str, color: str) -> str:
+        """Returns a string in a given color.
+
+        Args:
+            text (str): The text to color.
+            color (str): The color to use.
+
+        Returns:
+            str: The colored text.
+        """
+        return f'{Fore.__dict__[color.upper()]}{text}{Fore.RESET}'
+    
+    @staticmethod
+    def print_banner(header: str) -> None:
+        """Prints a banner with the given header
+
+        Args:
+            header (str): Header of the banner.
+        """
+        ascii_banner = figlet_format(header.upper())
+        banner = f"""
+{ascii_banner}
+**********************************************************************
+* Created by Shahaf Ashash, 2021                                     *
+* Github: https://github.com/shahafashash                            *
+* Have Fun!                                                          *
+**********************************************************************
+"""
+
+        Utils.poutput(banner, prefix=False)
+
+    @staticmethod
+    def create_table(data: List[List[Any]], headers: List[str], alignments: Dict[str, str]=None, borders: bool=True) -> PrettyTable:
         """Creates a table object
 
         Args:
@@ -62,104 +105,93 @@ class Utils:
 
         return table
 
-    def check_ip_address_or_network(self, ip: str) -> Union[str, None]:
-        """Check if the IP represents a network or a single adress
+    @staticmethod
+    def is_valid_ip(ip: str) -> bool:
+        """Checks if the given IP address is valid.
 
         Args:
-            ip (str): IP to check
+            ip (str): The IP address to check.
 
         Returns:
-            Union[str, None]: IP address or IP network if represents one of them. None if not.
-        """
-        network = self.check_ip_network_structure(ip)
-        if network is not None:
-            return network
-
-        address = self.check_ip_address_structure(ip)
-        return address
-
-    def check_ip_network_structure(self, ip_network: str) -> Union[str, None]:
-        """Check if IP network is valid
-
-        Args:
-            ip_network (str): IP network to check
-
-        Returns:
-            Union[str, None]: The IP network if the address is valid. None if not.
+            bool: True if the IP address is valid and False otherwise.
         """
         try:
-            _, cidr = ip_network.split('/')
-            cidr = int(cidr)
-            network = ipaddress.ip_network(ip_network)
-            return str(network)
-        except:
+            ipaddress.ip_address(ip)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def is_valid_network(network: str) -> bool:
+        """Checks if the given network is valid.
+
+        Args:
+            network (str): The network to check.
+
+        Returns:
+            bool: True if the network is valid and False otherwise.
+        """
+        try:
+            ipaddress.ip_network(network)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def is_valid_network_or_ip(network: str) -> bool:
+        """Checks if the given network is valid.
+
+        Args:
+            network (str): The network to check.
+
+        Returns:
+            bool: True if the network is valid and False otherwise.
+        """
+        if Utils.is_valid_network(network):
+            return True
+        elif Utils.is_valid_ip(network):
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def is_valid_port_range(port_range: str) -> Optional[Tuple[int, int]]:
+        """Checks if the given port range is valid and between 1 and 65535.
+
+        Args:
+            port_range (str): The port range to check. The port range is a string in the format 'start-end'.
+
+        Returns:
+            Optional[Tuple[int, int]]: Tuple of the start and end ports if the port range is valid and None otherwise.
+        """
+        if not port_range:
             return None
-
-    def check_ip_address_structure(self, ip_address: str) -> Union[str, None]:
-        """Check if the IP address is valid
-
-        Args:
-            ip_address (str): IP address to check 
-
-        Returns:
-            Union[str, None]: The IP address if the address is valid. None if not.
-        """
         try:
-            ip = ipaddress.ip_address(ip_address)
-            return str(ip)
-        except:
-            return None
-
-    def check_port_range(self, range: str) -> Union[tuple[int, int], None]:
-        """Check if the range of ports given is valid and between 1 to 65535
-
-        Args:
-            range (str): Range of ports to scan. Arg should be in the following format: <min_port>-<max_port>
-
-        Returns:
-            Union[tuple[int, int], None]: Tuple of the minimum and maximum ports. None if the range is not valid.
-        """
-        try:
-            ports = range.split('-')
-            min_port, max_port = ports
-            min_port = int(min_port)
-            max_port = int(max_port)
-            if min_port > 0 and min_port <= max_port and max_port <= 65535:
-                return (min_port, max_port)
+            if '-' in port_range:
+                start_port, end_port = port_range.split('-')
             else:
+                start_port = end_port = port_range
+            start_port = int(start_port)
+            end_port = int(end_port) if end_port else start_port
+
+            if start_port < 1 or start_port > 65535 or end_port < 1 or end_port > 65535:
                 return None
-        except:
+
+            return start_port, end_port
+        except ValueError:
             return None
 
-    def check_mac_address_structure(self, mac_address: str) -> Union[str, None]:
-        """Check if the structure of the MAC address is valid
+    @staticmethod
+    def is_valid_mac_address(mac: str) -> bool:
+        """Checks if the given MAC address is valid.
 
         Args:
-            mac_address (str): Mac address to check its' structure.
+            mac (str): The MAC address to check.
 
         Returns:
-            Union[str, None]: The MAC address if the structure is valid. None if not.
+            bool: True if the MAC address is valid and False otherwise.
         """
-        pattern = r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})|([0-9a-fA-F]{4}\\.[0-9a-fA-F]{4}\\.[0-9a-fA-F]{4})$'
-        res = re.search(pattern, mac_address)
-        if res is not None:
-            return mac_address
-        return None
-
-    def print_banner(self, header: str) -> None:
-        """Prints a banner with the given header
-
-        Args:
-            header (str): Header of the banner.
-        """
-        ascii_banner = figlet_format(header.upper())
-        banner = f"""
-{ascii_banner}
-**********************************************************************
-* Created by Shahaf Ashash, 2021                                     *
-* Github: https://github.com/shahafashash                            *
-* Have Fun!                                                          *
-**********************************************************************
-"""
-
-        self.poutput(banner, prefix=False)
+        if not mac:
+            return False
+        pattern = re.compile(r'^([0-9a-fA-F]{2}[:]){5}([0-9a-fA-F]{2})$')
+        return pattern.match(mac) is not None
