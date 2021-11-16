@@ -6,6 +6,7 @@ import re
 import sys
 import os
 from colorama import Fore
+import requests
 
 class Utils:
     """Class for utility functions"""
@@ -195,3 +196,22 @@ class Utils:
             return False
         pattern = re.compile(r'^([0-9a-fA-F]{2}[:]){5}([0-9a-fA-F]{2})$')
         return pattern.match(mac) is not None
+
+    @staticmethod
+    def get_vendor_from_mac(mac: str) -> str:
+        """Gets the vendor name from the given MAC address.
+
+        Args:
+            mac (str): The MAC address to get the vendor name from.
+
+        Returns:
+            str: The vendor name.
+        """
+        if not Utils.is_valid_mac_address(mac):
+            return ''
+        url = f'https://api.macvendors.com/{mac}'
+        try:
+            response = requests.get(url)
+            return response.text
+        except requests.exceptions.RequestException:
+            return 'unknown'
