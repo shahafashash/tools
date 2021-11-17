@@ -212,6 +212,9 @@ class Utils:
         url = f'https://api.macvendors.com/{mac}'
         try:
             response = requests.get(url)
+            # If the response is not 200, return 'unknown'
+            if response.status_code != 200:
+                return 'unknown'
             return response.text
         except requests.exceptions.RequestException:
             return 'unknown'

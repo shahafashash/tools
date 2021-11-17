@@ -13,11 +13,12 @@ class LanScanner:
     def __init__(self) -> None:
         pass
 
-    def scan_network(self, ip_network: str) -> Dict[str, Dict[str, str]]:
+    def scan_network(self, ip_network: str, timeout: int=3) -> Dict[str, Dict[str, str]]:
         """Send ARP requests to a range of IP addresses and display the result
 
         Args:
             ip_network (str): The IP network to scan. 
+            timeout (int): The timeout in seconds for each ARP request. Defaults to 3 seconds.
         
         Returns:
             Dict[str, Dict[str, str]]: A dictionary of IP addresses and their MAC addresses and vendor names.
@@ -35,21 +36,32 @@ class LanScanner:
 
         try:
             # Scan the network for hosts using ARP and display the result
-            answered, _ = arping(ip_network, verbose=False)
-            # Get the rows of the table.
-            rows = []
+            answered, _ = arping(ip_network, timeout=3, verbose=False)
+            
+            # Display the results
+            headers = ['IP Address', 'Vendor', 'MAC Address', 'Vendor Prefix']
+            alignments = {'IP Address': 'l', 'Vendor': 'l', 'MAC Address': 'l', 'Vendor Prefix': 'l'}
+            results = []
+            num_of_rows = 0
             for answer in answered:
+                # Get the IP address
                 ip = answer[1].psrc
+                # Get the MAC address
                 mac = answer[1].hwsrc
+                # Get the vendor name and prefix
                 vendor = Utils.get_vendor_from_mac(mac)
-                rows.append([ip, vendor, mac])
-                sleep(1)
-            # Display the result
-            if len(rows) > 0:
-                headers = ['IP Address', 'Vendor', 'MAC Address']
-                alignments = {'IP Address': 'l', 'Vendor': 'l', 'MAC Address': 'l'}
-                table = Utils.create_table(rows, headers, alignments=alignments, borders=False)
-                Utils.poutput(table.get_string(), prefix=False)
+                vendor_prefix = mac[:8]
+                # Add the results to the list
+                results.append([ip, vendor, mac, vendor_prefix])
+                # Update the table
+                num_of_rows += 1
+                table = Utils.create_table(results, headers, alignments=alignments, borders=False)
+                if num_of_rows != 1:
+                    Utils.poutput(f'\33[{num_of_rows}A{table.get_string()}', prefix=False)
+                else:
+                    Utils.poutput(table.get_string(), prefix=False)
+                # Sleep to prevent flooding the network
+                sleep(timeout)
 
         except KeyboardInterrupt:
             Utils.perror('Got interrupted!')
@@ -64,13 +76,15 @@ class LanScanner:
         Utils.poutput('', prefix=False)
         Utils.poutput(f'Scan ended at: {str(end_time)}')
         Utils.poutput(f'Scan duration: {str(end_time - start_time)}')
-        return {ip: {'vendor': vendor, 'mac': mac} for ip, vendor, mac in rows}
+        return {ip: {'vendor': vendor, 'mac': mac, 'vendor_prefix': vendor_prefix} for ip, vendor, mac, vendor_prefix in results}
 
 
 def main():
     # Parse the command line arguments
     parser = ArgumentParser(description='Scan a network for hosts using ARP')
     parser.add_argument('-i', '--ip-network', required=True, help='IP address or network to scan')
+    # Add timeout argument
+    parser.add_argument('-t', '--timeout', type=int, default=3, help='Timeout in seconds')
     args = parser.parse_args()
 
     # Print the banner
@@ -85,7 +99,7 @@ def main():
     lan_scanner = LanScanner()
 
     # Scan the network for hosts using ARP
-    lan_scanner.scan_network(args.ip_network)
+    lan_scanner.scan_network(args.ip_network, args.timeout)
 
 
 if __name__ == '__main__':
