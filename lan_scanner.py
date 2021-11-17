@@ -90,7 +90,6 @@ def main():
     # Parse the command line arguments
     parser = ArgumentParser(description='Scan a network for hosts using ARP')
     parser.add_argument('-i', '--ip-network', required=True, help='IP address or network to scan')
-    # Add timeout argument
     parser.add_argument('-t', '--timeout', type=int, default=3, help='Timeout in seconds')
     args = parser.parse_args()
 
@@ -106,7 +105,7 @@ def main():
     lan_scanner = LanScanner()
 
     # Scan the network for hosts using ARP
-    lan_scanner.scan_network(args.ip_network, args.timeout)
+    lan_scanner.scan_network(args.ip_network, timeout=args.timeout)
 
 
 if __name__ == '__main__':
