@@ -23,6 +23,13 @@ class LanScanner:
         Returns:
             Dict[str, Dict[str, str]]: A dictionary of IP addresses and their MAC addresses and vendor names.
         """
+        # Check if running with root privileges
+        if not Utils.is_root():
+            Utils.perror('You must run this script with root privileges')
+            Utils.perror('Try running \'sudo python3 lan_scanner.py <arguments>\'')
+            Utils.perror('Exiting...')
+            return
+        
         # Validate the IP address
         is_valid_ip = Utils.is_valid_network_or_ip(ip_network)
         if not is_valid_ip:
